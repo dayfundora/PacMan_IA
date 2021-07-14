@@ -87,109 +87,86 @@ def depthFirstSearch(problem):
     
     """
     "*** YOUR CODE HERE ***"
-   
-    stack = util.Stack()
-    visited=[]
-    
-    root =problem.getStartState()
-    stack.push(root)
-    path={root:[]}
-    #print path
-    
-    node = stack.pop()
-    visited = []
-    while not problem.isGoalState(node):
-        successors = problem.getSuccessors(node)
-        visited.append(node)
 
-        #successors.reverse()
-        for x in successors:
-            if not x[0] in visited:
-                stack.push(x[0])
-                #print "node", node
-                #print "x[1]", x[1]
-                #print "dicc",path
-                path[x[0]]=path[node]+[x[1]]
-                #print "dicc",path
-        node = stack.pop()
+    return searchAlgoritm(problem,heuristic=nullHeuristic,typeName='dfs')
 
-    return path[node]   
-    
+
+
 def breadthFirstSearch(problem):
- 
-    queue = util.Queue()
-    root =problem.getStartState()
-    queue.push(root)
-    path={root:[]}
-    #print path
+    """Search the shallowest nodes in the search tree first."""
+    "*** YOUR CODE HERE ***"
     
-    node = queue.pop()
-    visited = [root]
-    while not problem.isGoalState(node):
-        successors = problem.getSuccessors(node)
-        #successors.reverse()
-        for x in successors:
-            if not x[0] in visited:
-                queue.push(x[0])
-                #print "node", node
-                #print "x[1]", x[1]
-                #print "dicc",path
-                path[x[0]]=path[node]+[x[1]]
-                visited.append(x[0])
+    return searchAlgoritm(problem,heuristic=nullHeuristic,typeName='bfs')
 
-                #print "dicc",path
-        node = queue.pop()
 
-    return path[node]   
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    pQueue = util.PriorityQueue() 
-    visited = set()
-    root=problem.getStartState()
-    pQueue.push((root, [], 0), 0)  
-    while True:
-        node,path,cost = pQueue.pop()
-        if problem.isGoalState(node):   
-            break
-        else:
-            if node not in visited:  
-                visited.add(node)     
-                for x in problem.getSuccessors(node):
-                    pQueue.push((x[0], path+[x[1]], cost+x[2]), cost+x[2]) 
 
-    return path
+    return searchAlgoritm(problem,heuristic=nullHeuristic,typeName='ucs')
 
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
-    #cantidad pasos
-
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    pQueue = util.PriorityQueue() 
-    visited = set()
-    root=problem.getStartState()
-    pQueue.push((root, [], 0),heuristic(problem.getStartState(), problem) + 0)  
-    while True:
-        node,path,cost = pQueue.pop()
-        if problem.isGoalState(node):   
-            break
-        else:
-            if node not in visited:  
-                visited.add(node)     
-                for x in problem.getSuccessors(node):
-                    cost_child=cost+x[2]
-                    pQueue.push((x[0], path+[x[1]], cost_child), cost_child+heuristic(x[0],problem)) 
 
-    return path
-                   
+    return searchAlgoritm(problem,heuristic,'astar')
+
+
+def searchAlgoritm(problem,heuristic=nullHeuristic,typeName='dfs'):
+    def dfs_prior(item):
+        return item[5]
+
+    def bfs_prior(item):
+        return item[2]
+
+    def ucs_prior(item):
+            return item[4]
+
+    def astar_prior(item):
+            return item[4]
+
+    i = 1
+    if typeName == 'dfs':
+        cola = util.PriorityQueueWithFunction(dfs_prior)
+    elif typeName == 'bfs':
+        cola = util.PriorityQueueWithFunction(bfs_prior)
+    elif typeName == 'ucs':
+        cola = util.PriorityQueueWithFunction(ucs_prior)
+    else:
+        cola = util.PriorityQueueWithFunction(astar_prior)
+
+    visited=[]
+    cola.push((problem.getStartState(),'',0,[''],0,0))
+
+    while not cola.isEmpty():
+        actual_state= cola.pop()
+        if  actual_state[0] not in visited:
+            visited.append(actual_state[0])
+        else:
+            continue
+
+        if problem.isGoalState(actual_state[0]):
+            break
+
+        succesors = problem.getSuccessors(actual_state[0])
+
+        for suc in succesors:
+            temp =[]+ actual_state[3]
+            h=heuristic(suc[0],problem)
+            if suc[0] not in visited:
+                temp.append(suc[1])
+                item = (suc[0],suc[1],suc[2]+actual_state[2],temp,suc[2]+actual_state[2]+h,i)
+                cola.push(item)
+                i-=1
+    return actual_state[3][1:]
 
 # Abbreviations
 bfs = breadthFirstSearch
